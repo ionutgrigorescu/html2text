@@ -69,6 +69,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.ignore_emphasis = config.IGNORE_EMPHASIS  # covered in cli
         self.bypass_tables = config.BYPASS_TABLES  # covered in cli
         self.ignore_tables = config.IGNORE_TABLES  # covered in cli
+        self.testrail_tables = config.TESTRAIL_TABLES
         self.google_doc = False  # covered in cli
         self.ul_item_mark = '*'  # covered in cli
         self.emphasis_mark = '_'  # covered in cli
@@ -620,19 +621,24 @@ class HTML2Text(HTMLParser.HTMLParser):
                             self.o("</" + config.TABLE_MARKER_FOR_PAD + ">")
                             self.o("  \n")
                 if tag in ["td", "th"] and start:
+                    if self.testrail_tables and tag == 'th':
+                        self.o("|")
                     if self.split_next_td:
                         self.o("| ")
                     self.split_next_td = True
 
                 if tag == "tr" and start:
                     self.td_count = 0
+                    if self.testrail_tables:
+                        self.o("||")
                 if tag == "tr" and not start:
                     self.split_next_td = False
                     self.soft_br()
                 if tag == "tr" and not start and self.table_start:
                     # Underline table header
-                    self.o("|".join(["---"] * self.td_count))
-                    self.soft_br()
+                    if not self.testrail_tables:
+                        self.o("|".join(["---"] * self.td_count))
+                        self.soft_br()
                     self.table_start = False
                 if tag in ["td", "th"] and start:
                     self.td_count += 1
